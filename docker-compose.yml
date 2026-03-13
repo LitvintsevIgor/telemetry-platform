@@ -1,0 +1,18 @@
+version: "3"
+
+services:
+  db:
+    image: timescale/timescaledb:latest-pg14
+    environment:
+      POSTGRES_DB: telemetry
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+
+  api:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
