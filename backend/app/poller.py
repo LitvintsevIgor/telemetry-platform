@@ -1,27 +1,77 @@
-import random
+import httpx
+import asyncio
 from datetime import datetime
 
 from app.db import SessionLocal
 from app.models import Metric
 
 
-def poll_external_api():
+LOGIN = "litvintsevigorwork@gmail.com"
+PASSWORD = "test555"
 
-    print("Generating telemetry data...")
+PARAMETER_ID = 51112663
 
-    db = SessionLocal()
 
-    try:
+async def poll_external_api():
 
-        metric = Metric(
-            device_id="device_1",
-            metric="temperature",
-            value=random.uniform(20, 30),
-            timestamp=datetime.utcnow()
+    async with httpx.AsyncClient() as client:
+
+        # 1️⃣ Авторизация
+        login_response = await client.post(
+            "https://api.owencloud.ru/v1/auth/open",
+            json={
+                "login": LOGIN,
+                "password": PASSWORD
+            }
         )
 
-        db.add(metric)
-        db.commit()
+        token = login_response.json().get("token")
 
-    finally:
-        db.close()
+        if not token:
+            print("Failed to get token")
+            return
+
+        # 2️⃣ Запрос параметра
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "*/*",
+            "Content-Type": "application/json"
+        }
+
+        response = await client.post(
+            "https://api.owencloud.ru/v1/parameters/last-data",
+            headers=headers,
+            json={"ids": [PARAMETER_ID]}
+        )
+
+        data = response.json()
+
+        if data and data[0]["values"]:
+            value = data[0]["values"][0]["v"]
+        else:
+            print("No data received")
+            return
+
+        print("Received data:", data)
+
+        value = data[0]["values"][0]["v"]
+
+        print("Received value:", value)
+
+        # 3️⃣ Сохраняем в БД
+        db = SessionLocal()
+
+        try:
+            metric = Metric(
+                device_id="51112663",
+                name="Общая выручка",
+                code="f88",
+                value=value,
+                timestamp=datetime.utcnow()
+            )
+
+            db.add(metric)
+            db.commit()
+
+        finally:
+            db.close()

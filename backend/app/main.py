@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Query
 from apscheduler.schedulers.background import BackgroundScheduler
+import asyncio
 
 from app.db import engine, SessionLocal
 from app.models import Base, Metric
@@ -38,9 +39,9 @@ def get_metrics(device_id: str = Query(...)):
 scheduler = BackgroundScheduler()
 
 scheduler.add_job(
-    poll_external_api,
+    lambda: asyncio.run(poll_external_api()),
     "interval",
-    seconds=10
+    seconds=60
 )
 
 
