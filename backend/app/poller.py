@@ -1,3 +1,4 @@
+from settings import settings
 import httpx
 import asyncio
 from datetime import datetime
@@ -5,12 +6,9 @@ from datetime import datetime
 from app.db import SessionLocal
 from app.models import Metric
 
-
-LOGIN = "litvintsevigorwork@gmail.com"
-PASSWORD = "test555"
-
-PARAMETER_ID = 51112663
-
+LOGIN = settings.OWEN_LOGIN
+PASSWORD = settings.OWEN_PASSWORD
+PARAMETER_ID = settings.OWEN_PARAMETER_ID
 
 async def poll_external_api():
 
@@ -63,7 +61,7 @@ async def poll_external_api():
 
         try:
             metric = Metric(
-                device_id="51112663",
+                device_id=PARAMETER_ID,
                 name="Общая выручка",
                 code="f88",
                 value=value,
