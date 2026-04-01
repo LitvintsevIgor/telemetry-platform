@@ -1,4 +1,7 @@
-1. Из папки backend запускаем команду: uvicorn app.main:app --reload
-2. Из корня проекта запускаем: docker compose up -d
-3. Можно подключиться к базе: help
-4. Вывести таблицу с данными: SELECT \* FROM metrics;
+- Зависимости все должны быть установлены
+- Открывем Docker desktop
+- Из корня проекта запускаем: docker compose up -d
+- Из папки backend запускаем команду: source .venv/bin/activate
+- Из папки backend запускаем команду: uvicorn app.main:app --reload
+- Можно подключиться к базе:
+- Вывести таблицу с данными: SELECT \* FROM metrics;

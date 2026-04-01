@@ -1,35 +1,24 @@
 from settings import settings
 import httpx
-import asyncio
 from datetime import datetime
 
 from app.db import SessionLocal
 from app.models import Metric
+from app import owen_token_store
 
-LOGIN = settings.OWEN_LOGIN
-PASSWORD = settings.OWEN_PASSWORD
 PARAMETER_ID = settings.OWEN_PARAMETER_ID
+
 
 async def poll_external_api():
 
+    token = owen_token_store.get()
+    if not token:
+        print("Owen token unavailable; complete POST /login in the app first.")
+        return
+
     async with httpx.AsyncClient() as client:
 
-        # 1️⃣ Авторизация
-        login_response = await client.post(
-            "https://api.owencloud.ru/v1/auth/open",
-            json={
-                "login": LOGIN,
-                "password": PASSWORD
-            }
-        )
-
-        token = login_response.json().get("token")
-
-        if not token:
-            print("Failed to get token")
-            return
-
-        # 2️⃣ Запрос параметра
+        # Запрос параметра
         headers = {
             "Authorization": f"Bearer {token}",
             "Accept": "*/*",
@@ -61,7 +50,7 @@ async def poll_external_api():
 
         try:
             metric = Metric(
-                device_id=PARAMETER_ID,
+                device_id=str(PARAMETER_ID),
                 name="Общая выручка",
                 code="f88",
                 value=value,
