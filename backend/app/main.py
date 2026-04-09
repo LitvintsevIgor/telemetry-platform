@@ -1,10 +1,12 @@
+from datetime import datetime
+
+import asyncio
+import httpx
+from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from apscheduler.schedulers.background import BackgroundScheduler
-from pydantic import BaseModel, Field
-import asyncio
-import httpx
+from pydantic import BaseModel, ConfigDict, Field
 
 from settings import settings
 from app.db import engine, SessionLocal
@@ -26,6 +28,16 @@ app.add_middleware(
 class LoginBody(BaseModel):
     login: str = Field(..., min_length=1)
     password: str = Field(..., min_length=1)
+
+
+class MetricOut(BaseModel):
+    id: int
+    timestamp: datetime
+    box_id: int
+    payment_type: str
+    value: float
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 OWEN_AUTH_OPEN = "https://api.owencloud.ru/v1/auth/open"
@@ -52,7 +64,6 @@ async def login(body: LoginBody):
     )
 
 
-# создаем таблицы
 Base.metadata.create_all(bind=engine)
 
 
@@ -61,20 +72,14 @@ def health():
     return {"status": "ok"}
 
 
-@app.get("/metrics")
-def get_metrics(device_id: str = Query(...)):
-
+@app.get("/metrics", response_model=list[MetricOut])
+def get_metrics(box_id: int | None = Query(None)):
     db = SessionLocal()
-
     try:
-
-        data = db.query(Metric) \
-            .filter(Metric.device_id == device_id) \
-            .order_by(Metric.timestamp) \
-            .all()
-
-        return data
-
+        q = db.query(Metric).order_by(Metric.timestamp)
+        if box_id is not None:
+            q = q.filter(Metric.box_id == box_id)
+        return q.all()
     finally:
         db.close()
 
@@ -84,12 +89,12 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(
     lambda: asyncio.run(poll_external_api()),
     "interval",
-    seconds=60
+    seconds=settings.OWEN_POLL_INTERVAL_SECONDS,
 )
 
 
 @app.on_event("startup")
-def start_scheduler():
+async def startup():
     scheduler.start()
 
 

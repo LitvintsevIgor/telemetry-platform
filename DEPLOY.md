@@ -43,7 +43,8 @@
    | Имя переменной | Значение |
    |----------------|----------|
    | `DATABASE_URL` | Вставьте **полную** строку из Neon (шаг 1). |
-   | `OWEN_PARAMETER_ID` | Тот же числовой ID, что у вас локально (например `51112663`). |
+   | `OWEN_DEVICE_ID` | ID устройства Owen Cloud (например `628583`), как локально. |
+   | `OWEN_POLL_INTERVAL_SECONDS` | Интервал опроса API в секундах (по умолчанию `60`). |
    | `CORS_ORIGINS` | Пока можно указать **`http://localhost:5173`** — чтобы локальный фронт ходил к API. После деплоя фронта на Vercel вы **добавите** сюда URL вида `https://ваш-проект.vercel.app` (см. шаг 4). Несколько адресов — **через запятую без пробелов**: `http://localhost:5173,https://xxx.vercel.app` |
 
    **`PORT`** вручную обычно **не задают** — Railway подставит сам.
@@ -105,7 +106,8 @@
 | Где | Переменная | Значение |
 |-----|------------|----------|
 | **Railway** | `DATABASE_URL` | Строка Neon |
-| **Railway** | `OWEN_PARAMETER_ID` | Ваш ID параметра |
+| **Railway** | `OWEN_DEVICE_ID` | ID устройства Owen Cloud |
+| **Railway** | `OWEN_POLL_INTERVAL_SECONDS` | Интервал опроса (сек), опционально |
 | **Railway** | `CORS_ORIGINS` | `http://localhost:5173` + запятая + URL Vercel |
 | **Vercel** | `VITE_API_URL` | Публичный URL Railway API (без `/`) |
 
@@ -118,4 +120,4 @@
 
 ---
 
-*English summary: deploy Postgres (e.g. Neon), deploy `backend/` with Docker on Railway using `DATABASE_URL`, `OWEN_PARAMETER_ID`, `CORS_ORIGINS`; deploy `frontend/` on Vercel with `VITE_API_URL` pointing at the API; then add the Vercel URL to `CORS_ORIGINS`.*
+*English summary: deploy Postgres (e.g. Neon), deploy `backend/` with Docker on Railway using `DATABASE_URL`, `OWEN_DEVICE_ID`, optional `OWEN_POLL_INTERVAL_SECONDS`, `CORS_ORIGINS`; deploy `frontend/` on Vercel with `VITE_API_URL` pointing at the API; then add the Vercel URL to `CORS_ORIGINS`.*

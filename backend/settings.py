@@ -10,7 +10,8 @@ class Settings(BaseSettings):
     DB_NAME: str | None = None
     DB_USER: str | None = None
     DB_PASSWORD: str | None = None
-    OWEN_PARAMETER_ID: int
+    OWEN_DEVICE_ID: int = 628583
+    OWEN_POLL_INTERVAL_SECONDS: int = 60
     # Comma-separated origins for browser clients (e.g. http://localhost:5173,https://app.example.com)
     CORS_ORIGINS: str = "http://localhost:5173"
 

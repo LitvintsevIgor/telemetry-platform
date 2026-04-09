@@ -8,9 +8,8 @@ class Metric(Base):
 
     __tablename__ = "metrics"
 
-    id = Column(Integer, primary_key=True, index=True)
-    device_id = Column(String, index=True)
-    name = Column(String, index=True)
-    code = Column(String, index=True)
-    value = Column(Float)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     timestamp = Column(DateTime, index=True)
+    box_id = Column(Integer, index=True)
+    payment_type = Column(String, index=True)
+    value = Column(Float)
