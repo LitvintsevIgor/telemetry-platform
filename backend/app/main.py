@@ -3,7 +3,7 @@ from datetime import datetime
 import asyncio
 import httpx
 from apscheduler.schedulers.background import BackgroundScheduler
-from fastapi import FastAPI, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from settings import settings
 from app.db import engine, SessionLocal
 from app.models import Base, Metric
+from app.month_metrics import end_of_previous_month_utc, month_summary_values
 from app.poller import poll_external_api
 from app import owen_token_store
 
@@ -38,6 +39,21 @@ class MetricOut(BaseModel):
     value: float
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class MonthSummaryOut(BaseModel):
+    current_month_total: float
+    sum_latest: float
+    sum_as_of_end_previous_month: float
+    end_previous_month_utc: datetime
+
+
+def _require_owen_bearer(authorization: str | None = Header(None)) -> None:
+    if authorization is None or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    token = authorization[7:].strip()
+    if owen_token_store.get() != token:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
 
 OWEN_AUTH_OPEN = "https://api.owencloud.ru/v1/auth/open"
@@ -80,6 +96,22 @@ def get_metrics(box_id: int | None = Query(None)):
         if box_id is not None:
             q = q.filter(Metric.box_id == box_id)
         return q.all()
+    finally:
+        db.close()
+
+
+@app.get("/metrics/month-summary", response_model=MonthSummaryOut)
+def get_metrics_month_summary(_: None = Depends(_require_owen_bearer)):
+    t_end = end_of_previous_month_utc()
+    db = SessionLocal()
+    try:
+        sum_latest, sum_as_of, delta = month_summary_values(db, t_end)
+        return MonthSummaryOut(
+            current_month_total=delta,
+            sum_latest=sum_latest,
+            sum_as_of_end_previous_month=sum_as_of,
+            end_previous_month_utc=t_end,
+        )
     finally:
         db.close()
 
