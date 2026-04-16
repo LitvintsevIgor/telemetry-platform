@@ -1,5 +1,18 @@
+/* SF Pro Rounded — только из ОС Apple; с CDN его нельзя. Дальше — округлый веб-fallback. */
 body {
   margin: 0;
+  font-family:
+    'SF Pro Rounded',
+    'SF Pro Rounded Text',
+    'M PLUS Rounded 1c',
+    ui-rounded,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    system-ui,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {

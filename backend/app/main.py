@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from settings import settings
 from app.db import engine, SessionLocal
 from app.models import Base, Metric
-from app.month_metrics import end_of_previous_month_utc, month_summary_values
+from app.month_metrics import compute_dashboard_metrics
 from app.poller import poll_external_api
 from app import owen_token_store
 
@@ -42,10 +42,27 @@ class MetricOut(BaseModel):
 
 
 class MonthSummaryOut(BaseModel):
+    """Выручка и сравнения; границы суток и месяца — Europe/Moscow."""
+
     current_month_total: float
+    month_vs_prev_month_pct: float | None
+    month_compare_caption: str
+
+    today_total: float
+    today_vs_weekday_pct: float | None
+    today_compare_caption: str
+
+    cash_today: float
+    cash_vs_yesterday_pct: float | None
+
+    card_today: float
+    card_vs_yesterday_pct: float | None
+
+    day_compare_caption: str
+
     sum_latest: float
     sum_as_of_end_previous_month: float
-    end_previous_month_utc: datetime
+    start_current_month_msk: datetime
 
 
 def _require_owen_bearer(authorization: str | None = Header(None)) -> None:
@@ -102,15 +119,24 @@ def get_metrics(box_id: int | None = Query(None)):
 
 @app.get("/metrics/month-summary", response_model=MonthSummaryOut)
 def get_metrics_month_summary(_: None = Depends(_require_owen_bearer)):
-    t_end = end_of_previous_month_utc()
     db = SessionLocal()
     try:
-        sum_latest, sum_as_of, delta = month_summary_values(db, t_end)
+        d = compute_dashboard_metrics(db)
         return MonthSummaryOut(
-            current_month_total=delta,
-            sum_latest=sum_latest,
-            sum_as_of_end_previous_month=sum_as_of,
-            end_previous_month_utc=t_end,
+            current_month_total=d.current_month_total,
+            month_vs_prev_month_pct=d.month_vs_prev_month_pct,
+            month_compare_caption=d.month_compare_caption,
+            today_total=d.today_total,
+            today_vs_weekday_pct=d.today_vs_weekday_pct,
+            today_compare_caption=d.today_compare_caption,
+            cash_today=d.cash_today,
+            cash_vs_yesterday_pct=d.cash_vs_yesterday_pct,
+            card_today=d.card_today,
+            card_vs_yesterday_pct=d.card_vs_yesterday_pct,
+            day_compare_caption=d.day_compare_caption,
+            sum_latest=d.sum_latest,
+            sum_as_of_end_previous_month=d.sum_as_of_before_current_month_msk,
+            start_current_month_msk=d.start_current_month_msk,
         )
     finally:
         db.close()

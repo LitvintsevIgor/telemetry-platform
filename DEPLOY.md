@@ -117,6 +117,7 @@
 
 - **Фронт собирается, но логин не работает с продакшна** — чаще всего неверный **`VITE_API_URL`** или **`CORS_ORIGINS`**. Пересоберите фронт на Vercel после смены env (**Redeploy** в Vercel при необходимости).
 - **Бэкенд не стартует** — логи **Deployments** в Railway; проверьте `DATABASE_URL` и что Root Directory = **`backend`**.
+- **`ProgrammingError: column "box_id" of relation "metrics" does not exist`** — в базе осталась **старая** таблица `metrics` (другие колонки). SQLAlchemy `create_all()` **не** меняет уже существующие таблицы. Нужно **один раз** пересоздать таблицу по актуальной схеме: в репозитории есть [`backend/migrations/recreate_metrics.sql`](backend/migrations/recreate_metrics.sql) (скрипт **удаляет все строки** в `metrics`). Выполните его от имени той же БД, что в `DATABASE_URL`, например локально: `psql "$DATABASE_URL" -f backend/migrations/recreate_metrics.sql`, либо вставьте SQL в SQL Editor у Neon. После этого перезапуск бэкенда подхватит пустую таблицу; данные начнут снова накапливаться с поллера после входа в приложение.
 
 ---
 

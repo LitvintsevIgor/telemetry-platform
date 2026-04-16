@@ -1,0 +1,66 @@
+.page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 18px;
+  background: #f2f2f7;
+}
+
+.container {
+  width: 100%;
+  max-width: 400px;
+}
+
+.card {
+  border-radius: 22px !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  background: #fff !important;
+}
+
+.inner {
+  padding: 28px 24px 24px;
+}
+
+.title {
+  margin: 0 0 6px;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #1c1c1e;
+  line-height: 1.15;
+}
+
+.subtitle {
+  margin: 0 0 24px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: rgba(60, 60, 67, 0.55);
+  letter-spacing: -0.01em;
+}
+
+.form {
+  width: 100%;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 12px;
+  margin-top: 4px;
+}
+
+.reset {
+  color: rgba(60, 60, 67, 0.55) !important;
+  font-weight: 500;
+}
+
+.submit {
+  min-width: 120px;
+  font-weight: 600 !important;
+}
