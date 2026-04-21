@@ -58,6 +58,9 @@ class MonthSummaryOut(BaseModel):
     card_today: float
     card_vs_yesterday_pct: float | None
 
+    cash_month: float
+    card_month: float
+
     day_compare_caption: str
 
     sum_latest: float
@@ -133,6 +136,8 @@ def get_metrics_month_summary(_: None = Depends(_require_owen_bearer)):
             cash_vs_yesterday_pct=d.cash_vs_yesterday_pct,
             card_today=d.card_today,
             card_vs_yesterday_pct=d.card_vs_yesterday_pct,
+            cash_month=d.cash_month,
+            card_month=d.card_month,
             day_compare_caption=d.day_compare_caption,
             sum_latest=d.sum_latest,
             sum_as_of_end_previous_month=d.sum_as_of_before_current_month_msk,

@@ -27,16 +27,33 @@ function MetricChange({
   pct,
   caption,
   compact,
+  captionBelow,
 }: {
   pct: number | null
   caption: string
   compact?: boolean
+  /** Подпись под строкой с %, по центру (блоки «за месяц» / «за сегодня») */
+  captionBelow?: boolean
 }) {
   const wrapClass = compact
     ? `${styles.metricChange} ${styles.metricChangeCompact}`
-    : styles.metricChange
+    : captionBelow
+      ? `${styles.metricChange} ${styles.metricChangeStacked}`
+      : styles.metricChange
 
   if (pct == null) {
+    if (captionBelow) {
+      return (
+        <div className={wrapClass}>
+          <div className={styles.metricChangePctRow}>
+            <span className={styles.pct} style={{ color: MUTED }}>
+              —
+            </span>
+          </div>
+          <span className={styles.caption}>{caption}</span>
+        </div>
+      )
+    }
     return (
       <div className={wrapClass}>
         <span className={styles.pct} style={{ color: MUTED }}>
@@ -51,6 +68,34 @@ function MetricChange({
   const negative = pct < 0
   const neutral = pct === 0
   const color = neutral ? MUTED : positive ? IOS_GREEN : IOS_RED
+
+  if (captionBelow) {
+    return (
+      <div className={wrapClass}>
+        <div className={styles.metricChangePctRow}>
+          {!neutral && positive && (
+            <RiseOutlined
+              className={styles.arrow}
+              style={{ color: IOS_GREEN, fontSize: 11 }}
+              aria-hidden
+            />
+          )}
+          {!neutral && negative && (
+            <FallOutlined
+              className={styles.arrow}
+              style={{ color: IOS_RED, fontSize: 11 }}
+              aria-hidden
+            />
+          )}
+          <span className={styles.pct} style={{ color }}>
+            {positive ? '+' : ''}
+            {pct.toFixed(1)}%
+          </span>
+        </div>
+        <span className={styles.caption}>{caption}</span>
+      </div>
+    )
+  }
 
   return (
     <div className={wrapClass}>
@@ -73,6 +118,53 @@ function MetricChange({
         {pct.toFixed(1)}%
       </span>
       <span className={styles.caption}>{caption}</span>
+    </div>
+  )
+}
+
+function CashCardSplit({
+  cash,
+  card,
+  dayCompare,
+}: {
+  cash: number
+  card: number
+  dayCompare?: {
+    cashPct: number | null
+    cardPct: number | null
+    caption: string
+  }
+}) {
+  return (
+    <div className={styles.splitBottom}>
+      <div className={styles.splitCol} aria-label="Наличные">
+        <div className={styles.miniLabelRow}>
+          <WalletOutlined className={styles.miniIcon} aria-hidden />
+          <span>Наличные</span>
+        </div>
+        <p className={styles.valueXs}>{formatRub(cash)}</p>
+        {dayCompare ? (
+          <MetricChange
+            pct={dayCompare.cashPct}
+            caption={dayCompare.caption}
+            compact
+          />
+        ) : null}
+      </div>
+      <div className={styles.splitCol} aria-label="Безналичная оплата">
+        <div className={styles.miniLabelRow}>
+          <CreditCardOutlined className={styles.miniIcon} aria-hidden />
+          <span>Безнал</span>
+        </div>
+        <p className={styles.valueXs}>{formatRub(card)}</p>
+        {dayCompare ? (
+          <MetricChange
+            pct={dayCompare.cardPct}
+            caption={dayCompare.caption}
+            compact
+          />
+        ) : null}
+      </div>
     </div>
   )
 }
@@ -138,69 +230,46 @@ export default function HomePage() {
         ) : data ? (
           <div className={styles.stack}>
             <Card className={styles.card} styles={{ body: { padding: 0 } }}>
-              <div className={`${styles.cardBody} ${styles.cardCenter}`}>
-                <span className={styles.label}>Выручка за месяц</span>
-                <p className={`${styles.valueCenter} ${styles.valueLg}`}>
-                  {formatRub(data.current_month_total)}
-                </p>
-                <MetricChange
-                  pct={data.month_vs_prev_month_pct}
-                  caption={data.month_compare_caption}
-                />
+              <div className={`${styles.cardBody} ${styles.splitCardBody}`}>
+                <div className={styles.splitTop}>
+                  <span className={styles.label}>Выручка за месяц</span>
+                  <p className={`${styles.valueCenter} ${styles.valueLg}`}>
+                    {formatRub(data.current_month_total)}
+                  </p>
+                  <MetricChange
+                    pct={data.month_vs_prev_month_pct}
+                    caption={data.month_compare_caption}
+                    captionBelow
+                  />
+                </div>
+                <CashCardSplit cash={data.cash_month} card={data.card_month} />
               </div>
             </Card>
 
             <Card className={styles.card} styles={{ body: { padding: 0 } }}>
-              <div className={`${styles.cardBody} ${styles.cardCenter}`}>
-                <span className={styles.label}>Выручка сегодня</span>
-                <p className={`${styles.valueCenter} ${styles.valueMd}`}>
-                  {formatRub(data.today_total)}
-                </p>
-                <MetricChange
-                  pct={data.today_vs_weekday_pct}
-                  caption={data.today_compare_caption}
+              <div className={`${styles.cardBody} ${styles.splitCardBody}`}>
+                <div className={styles.splitTop}>
+                  <span className={styles.label}>Выручка за сегодня</span>
+                  <p className={`${styles.valueCenter} ${styles.valueMd}`}>
+                    {formatRub(data.today_total)}
+                  </p>
+                  <MetricChange
+                    pct={data.today_vs_weekday_pct}
+                    caption={data.today_compare_caption}
+                    captionBelow
+                  />
+                </div>
+                <CashCardSplit
+                  cash={data.cash_today}
+                  card={data.card_today}
+                  dayCompare={{
+                    cashPct: data.cash_vs_yesterday_pct,
+                    cardPct: data.card_vs_yesterday_pct,
+                    caption: data.day_compare_caption,
+                  }}
                 />
               </div>
             </Card>
-
-            <div className={styles.pairRow}>
-              <Card
-                className={`${styles.card} ${styles.cardMini}`}
-                styles={{ body: { padding: 0 } }}
-                aria-label="Наличные за сегодня"
-              >
-                <div className={styles.cardMiniInner}>
-                  <div className={styles.miniLabelRow}>
-                    <WalletOutlined className={styles.miniIcon} aria-hidden />
-                    <span>за сегодня</span>
-                  </div>
-                  <p className={styles.valueXs}>{formatRub(data.cash_today)}</p>
-                  <MetricChange
-                    pct={data.cash_vs_yesterday_pct}
-                    caption={data.day_compare_caption}
-                    compact
-                  />
-                </div>
-              </Card>
-              <Card
-                className={`${styles.card} ${styles.cardMini}`}
-                styles={{ body: { padding: 0 } }}
-                aria-label="Безналичная оплата за сегодня"
-              >
-                <div className={styles.cardMiniInner}>
-                  <div className={styles.miniLabelRow}>
-                    <CreditCardOutlined className={styles.miniIcon} aria-hidden />
-                    <span>за сегодня</span>
-                  </div>
-                  <p className={styles.valueXs}>{formatRub(data.card_today)}</p>
-                  <MetricChange
-                    pct={data.card_vs_yesterday_pct}
-                    caption={data.day_compare_caption}
-                    compact
-                  />
-                </div>
-              </Card>
-            </div>
           </div>
         ) : null}
       </div>

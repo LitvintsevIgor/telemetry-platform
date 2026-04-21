@@ -15,6 +15,9 @@ export type MonthSummary = {
   card_today: number
   card_vs_yesterday_pct: number | null
 
+  cash_month: number
+  card_month: number
+
   day_compare_caption: string
 
   sum_latest: number

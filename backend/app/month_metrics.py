@@ -133,6 +133,9 @@ class DashboardMetrics:
     card_today: float
     card_vs_yesterday_pct: float | None
 
+    cash_month: float
+    card_month: float
+
     day_compare_caption: str
 
     sum_latest: float
@@ -156,6 +159,9 @@ def compute_dashboard_metrics(db: Session, now_utc: datetime | None = None) -> D
     sum_before_month = sum_counters_as_of(db, start_current_month - _EPS, ("cash", "card"))
     month_total = sum_now_all - sum_before_month
 
+    sum_before_month_cash = sum_counters_as_of(db, start_current_month - _EPS, ("cash",))
+    sum_before_month_card = sum_counters_as_of(db, start_current_month - _EPS, ("card",))
+
     prev_month_moment = same_calendar_moment_prev_month_msk(now_msk)
     prev_month_start = start_of_month_msk(prev_month_moment.date())
     sum_prev_end = sum_counters_as_of(db, prev_month_moment, ("cash", "card"))
@@ -175,13 +181,17 @@ def compute_dashboard_metrics(db: Session, now_utc: datetime | None = None) -> D
     today_pct = pct_or_none(sum_today_all, week_ref)
 
     sum_now_cash = sum_counters_as_of(db, now_utc, ("cash",))
+    cash_month = sum_now_cash - sum_before_month_cash
+
+    sum_now_card = sum_counters_as_of(db, now_utc, ("card",))
+    card_month = sum_now_card - sum_before_month_card
+
     sum_end_y_cash = sum_counters_as_of(db, end_yesterday, ("cash",))
     cash_today = sum_now_cash - sum_end_y_cash
     before_yesterday = end_of_previous_day_msk(today_msk - timedelta(days=1))
     cash_yesterday = sum_end_y_cash - sum_counters_as_of(db, before_yesterday, ("cash",))
     cash_pct = pct_or_none(cash_today, cash_yesterday)
 
-    sum_now_card = sum_counters_as_of(db, now_utc, ("card",))
     sum_end_y_card = sum_counters_as_of(db, end_yesterday, ("card",))
     card_today = sum_now_card - sum_end_y_card
     card_yesterday = sum_end_y_card - sum_counters_as_of(db, before_yesterday, ("card",))
@@ -198,6 +208,8 @@ def compute_dashboard_metrics(db: Session, now_utc: datetime | None = None) -> D
         cash_vs_yesterday_pct=cash_pct,
         card_today=card_today,
         card_vs_yesterday_pct=card_pct,
+        cash_month=cash_month,
+        card_month=card_month,
         day_compare_caption="от вчера",
         sum_latest=sum_now_all,
         sum_as_of_before_current_month_msk=sum_before_month,
